@@ -4,6 +4,7 @@
   "description": "Shopping list app to demo 'the modern classic'",
   "main": "server.js",
   "scripts": {
+       "test": "mocha",
     "start": "node server.js"
   },
   "dependencies": {

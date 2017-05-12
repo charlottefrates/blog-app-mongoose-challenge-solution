@@ -22,7 +22,7 @@ function seedBlogData() {
   }
   // this will return a promise
   return BlogPost.insertMany(seedData);
-}
+};
 
 function generateBlogData(){
      return{
@@ -60,6 +60,37 @@ describe ('Blog API resource',function(){
       after(function() {
         return closeServer();
       });
+
+      describe('GET endpoint', function() {
+
+           it('should return all existing blog posts', function() {
+             // strategy:
+             //    1. get back all restaurants returned by by GET request to `/restaurants`
+             //    2. prove res has right status, data type
+             //    3. prove the number of restaurants we got back is equal to number
+             //       in db.
+             //
+             // need to have access to mutate and access `res` across
+             // `.then()` calls below, so declare it here so can modify in place
+             let res;
+             // this line of code days that re are returning a PROMISE
+             return chai.request(app)
+               .get('/posts')
+               .then(function(_res) {
+                 // so subsequent .then blocks can access resp obj.
+                 res = _res;
+                 res.should.have.status(200);
+                 // otherwise our db seeding didn't work
+                 res.body.posts.should.have.length.of.at.least(1);
+                 // check how many restaurants there are in db
+                 return BlogPost.count();
+               })
+               //uses value returned by restaurant.count in argument
+               .then(function(count) {
+                 res.body.posts.should.have.length.of(count);
+               });
+           });
+         });
 
 
 });
