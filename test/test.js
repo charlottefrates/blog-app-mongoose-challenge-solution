@@ -27,12 +27,11 @@ function seedBlogData() {
 function generateBlogData(){
      return{
           author: {
-            firstName: faker.Random.first_name(),
-            lastName: faker.Random.last_name()
+            firstName: faker.name.firstName(),
+            lastName: faker.name.lastName()
           },
           title: faker.lorem.words(),
           content: faker.lorem.paragraph(),
-          created: faker.date.recent()
      };
 };
 
@@ -77,20 +76,47 @@ describe ('Blog API resource',function(){
              return chai.request(app)
                .get('/posts')
                .then(function(_res) {
-                 // so subsequent .then blocks can access resp obj.
+                 console.log(_res, "RES");
                  res = _res;
                  res.should.have.status(200);
                  // otherwise our db seeding didn't work
-                 res.body.posts.should.have.length.of.at.least(1);
+                 res.body.should.have.length.of.at.least(1);
                  // check how many restaurants there are in db
                  return BlogPost.count();
                })
-               //uses value returned by restaurant.count in argument
+               //uses value returned by blog.count in argument
                .then(function(count) {
-                 res.body.posts.should.have.length.of(count);
+                 res.body.should.have.length.of(count);
                });
            });
-         });
+
+           it('should return blogs with right fields', function() {
+                 // Strategy: Get back all blogs, and ensure they have expected keys
+                 let resBlog;
+                 return chai.request(app)
+                   .get('/posts')
+                   .then(function(res) {
+                     res.should.have.status(200);
+                     res.should.be.json;
+                     res.body.should.be.a('array');
+                     res.body.should.have.length.of.at.least(1);
+
+                     res.body.forEach(function(blog) {
+                       blog.should.be.a('object');
+                       blog.should.include.keys(
+                         'id', 'author', 'title', 'content','created');
+                     });
+                     resBlog = res.body[0];
+                     //looks for documents in restaurant collection
+                     return BlogPost.findById(resBlog.id);
+                   })
+                   .then(function(posts) {
+                     resBlog.author.should.equal(posts.authorName);
+                     resBlog.title.should.equal(posts.title);
+                     resBlog.content.should.equal(posts.content);
+                   });
+               });
+      });
 
 
 });
